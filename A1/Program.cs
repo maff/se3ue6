@@ -9,7 +9,7 @@ namespace A1
     {
         static void Main(string[] args)
         {
-            Lager lager = new Lager(10);
+            Lager lager = new Lager(100);
             lager.Run(); 
 
             Console.ReadLine();

@@ -13,35 +13,33 @@ namespace A1
         internal event WorkerLogHandler eSleep;
 
         protected dPop _pop;
-        protected int _speed = 3;
+        protected StorageCheck _storageCheck;
+        protected int _speed = 6;
 
-        public Verbraucher(string name, dPop pop)
+        public Verbraucher(string name, dPop pop, StorageCheck storageCheck)
         {
             this._name = name;
             this._pop = pop;
+            this._storageCheck = storageCheck;
         }
 
         public void Run()
         {
             this.OnStart("Starting...");
-            this._active = true;
-            while (this._active == true)
+            while (true)
             {
                 for (int i = 0; i < this._speed; i++)
                 {
-                    LagerObject obj = this._pop();
-                    this.OnUse("Used object " + obj.Id);
+                    if (this._storageCheck())
+                    {
+                        LagerObject obj = this._pop();
+                        this.OnUse("Used object " + obj.Id);
+                    }
                 }
 
                 this.OnSleep("Sleeping for 1000 milliseconds");
                 Thread.Sleep(1000);
             }
-        }
-
-        public void Stop()
-        {
-            this.OnStop("Stopped");
-            this._active = false;
         }
 
         protected WorkerEventArgs getEventArgs(string message)

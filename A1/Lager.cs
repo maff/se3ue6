@@ -5,9 +5,6 @@ using System.Threading;
 
 namespace A1
 {
-    delegate void dPush(LagerObject o);
-    delegate LagerObject dPop();
-
     class Lager
     {
         protected Stack<LagerObject> _storage;
@@ -24,7 +21,7 @@ namespace A1
 
         public Lager(int capacity)
         {
-            this.setUp(capacity, 1, 2);
+            this.setUp(capacity, 2, 2);
         }
 
         public Lager(int capacity, int erzeuger, int verbraucher)
@@ -51,7 +48,7 @@ namespace A1
 
         protected void createErzeuger(int index)
         {
-            this._erzeuger[index] = new Erzeuger("Erzeuger " + index, this.Push);
+            this._erzeuger[index] = new Erzeuger("Erzeuger " + index, this.Push, this.CheckStorage);
             this._erzeuger[index].eCreate += new WorkerLogHandler(this._logger.Log);
             this._erzeuger[index].eStart += new WorkerLogHandler(this._logger.Log);
             this._erzeuger[index].eStop += new WorkerLogHandler(this._logger.Log);
@@ -62,7 +59,7 @@ namespace A1
 
         protected void createVerbraucher(int index)
         {
-            this._verbraucher[index] = new Verbraucher("Verbraucher " + index, this.Pop);
+            this._verbraucher[index] = new Verbraucher("Verbraucher " + index, this.Pop, this.CheckStorage);
             this._verbraucher[index].eUse += new WorkerLogHandler(this._logger.Log);
             this._verbraucher[index].eStart += new WorkerLogHandler(this._logger.Log);
             this._verbraucher[index].eStop += new WorkerLogHandler(this._logger.Log);
@@ -79,25 +76,35 @@ namespace A1
         protected void startErzeuger()
         {
             foreach (Thread e in this._erzeugerThread)
-                e.Start();
+            {
+                if(!e.IsAlive)
+                    e.Start();
+            }
         }
 
         protected void stopErzeuger()
         {
             foreach (Thread e in this._erzeugerThread)
+            {
                 e.Abort();
+            }
         }
 
         protected void startVerbraucher()
         {
             foreach (Thread v in this._verbraucherThread)
-                v.Start();
+            {
+                if(!v.IsAlive)
+                    v.Start();
+            }
         }
 
         protected void stopVerbraucher()
         {
             foreach (Thread v in this._verbraucherThread)
+            {
                 v.Abort();
+            }
         }
 
         protected void calcStoragePercentage()
@@ -107,40 +114,48 @@ namespace A1
 
         protected void Push(LagerObject o)
         {
-            this._storage.Push(o);
-
-            this.calcStoragePercentage();
-            if (this._storagePercentage > 0.9)
+            lock (this)
             {
-                this.startVerbraucher();
-            }
-            if (this._storagePercentage >= 1)
-            {
-                this.stopErzeuger();
+                this._storage.Push(o);
             }
         }
 
         protected LagerObject Pop()
         {
-            bool pop = true;
+            lock (this)
+            {
+                return this._storage.Pop();
+            }
+        }
+
+        protected bool CheckStorage()
+        {
+            bool action = true;
 
             this.calcStoragePercentage();
-            if (this._storagePercentage < 0.1)
+            if (this._storagePercentage > 0.90)
             {
-                pop = false;
+                this.startVerbraucher();
+            }
+            
+            else if (this._storagePercentage >= 1.00)
+            {
+                action = false;
+                this.stopErzeuger();
+            }
+            
+            else if (this._storagePercentage < 0.10)
+            {
                 this.startErzeuger();
             }
-            else if (this._storagePercentage == 0)
+            
+            else if (this._storagePercentage == 0.00)
             {
-                pop = false;
+                action = false;
                 this.stopVerbraucher();
             }
 
-            if(pop)
-                return this._storage.Pop();
-
-            return null;
+            return action;
         }
-
     }
 }

@@ -13,37 +13,34 @@ namespace A1
         internal event WorkerLogHandler eSleep;
 
         protected dPush _push;
-        protected int _speed = 2;
+        protected StorageCheck _storageCheck;
+        protected int _speed = 10;
 
-        public Erzeuger(string name, dPush push)
+        public Erzeuger(string name, dPush push, StorageCheck storageCheck)
         {
             this._name = name;
             this._push = push;
+            this._storageCheck = storageCheck;
         }
 
         public void Run()
         {
             this.OnStart("Starting...");
-            this._active = true;
-            while (this._active == true)
+            while (true)
             {
                 for (int i = 0; i < this._speed; i++)
                 {
-                    LagerObject obj = new LagerObject();
-                    this._push(obj);
-
-                    this.OnCreate("Created new object (" + obj.Id + ")");
+                    if (this._storageCheck())
+                    {
+                        LagerObject obj = new LagerObject();
+                        this._push(obj);
+                        this.OnCreate("Created new object (" + obj.Id + ")");
+                    }
                 }
 
                 this.OnSleep("Sleeping for 1000 milliseconds");
                 Thread.Sleep(1000);
             }
-        }
-
-        public void Stop()
-        {
-            this.OnStop("Stopped");
-            this._active = false;
         }
 
         protected WorkerEventArgs getEventArgs(string message)
