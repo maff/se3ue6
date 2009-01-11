@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Delegates.cs" />
     <Compile Include="Erzeuger.cs" />
+    <Compile Include="LagerObject.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Worker.cs" />
     <Compile Include="Lager.cs" />

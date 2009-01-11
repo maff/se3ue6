@@ -7,6 +7,9 @@ namespace A1
 {
     abstract class Worker
     {
+        protected int _counter = 0;
+
+        protected bool _active;
         protected string _name;
 
         public string Name

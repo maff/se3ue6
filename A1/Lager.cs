@@ -5,16 +5,19 @@ using System.Threading;
 
 namespace A1
 {
-    delegate void dPush(object o);
-    delegate object dPop();
+    delegate void dPush(LagerObject o);
+    delegate LagerObject dPop();
 
     class Lager
     {
-        protected Stack<object> _storage;
+        protected Stack<LagerObject> _storage;
         protected int _capacity;
 
         protected Erzeuger[] _erzeuger;
         protected Verbraucher[] _verbraucher;
+
+        protected Thread[] _erzeugerThread;
+        protected Thread[] _verbraucherThread;
 
         protected Logger _logger = new Logger();
 
@@ -32,33 +35,58 @@ namespace A1
         {
             this._capacity = capacity;
 
-            this._storage = new Stack<object>(capacity);
+            this._storage = new Stack<LagerObject>(capacity);
 
-            /*this._erzeuger = new Erzeuger[erzeuger];
+            this._erzeuger = new Erzeuger[erzeuger];
+            this._erzeugerThread = new Thread[erzeuger];
             for (int i = 0; i < this._erzeuger.Length; i++)
-                this._erzeuger[i] = new Erzeuger("Erzeuger " + i, this.Push);
+                this.createErzeuger(i);
             
             this._verbraucher = new Verbraucher[verbraucher];
+            this._verbraucherThread = new Thread[verbraucher];
             for (int j = 0; j < this._verbraucher.Length; j++)
-                this._verbraucher[j] = new Verbraucher("Verbraucher " + j, this.Pop);*/
+                this.createVerbraucher(j);
+        }
+
+        protected void createErzeuger(int index)
+        {
+            this._erzeuger[index] = new Erzeuger("Erzeuger " + index, this.Push);
+            this._erzeuger[index].eCreate += new WorkerLogHandler(this._logger.Log);
+            this._erzeuger[index].eStart += new WorkerLogHandler(this._logger.Log);
+            this._erzeuger[index].eStop += new WorkerLogHandler(this._logger.Log);
+            this._erzeuger[index].eSleep += new WorkerLogHandler(this._logger.Log);
+
+            this._erzeugerThread[index] = new Thread(new ThreadStart(this._erzeuger[index].Run));
+        }
+
+        protected void createVerbraucher(int index)
+        {
+            this._verbraucher[index] = new Verbraucher("Verbraucher " + index, this.Pop);
+            this._verbraucher[index].eUse += new WorkerLogHandler(this._logger.Log);
+            this._verbraucher[index].eStart += new WorkerLogHandler(this._logger.Log);
+            this._verbraucher[index].eStop += new WorkerLogHandler(this._logger.Log);
+            this._verbraucher[index].eSleep += new WorkerLogHandler(this._logger.Log);
+
+            this._verbraucherThread[index] = new Thread(new ThreadStart(this._verbraucher[index].Run));
         }
 
         public void Run()
         {
-            Erzeuger erz = new Erzeuger("Testerzeuger", this.Push);
-            erz.eStart += new WorkerLogHandler(this._logger.Log);
-            erz.eStop += new WorkerLogHandler(this._logger.Log);
-            erz.eSleep += new WorkerLogHandler(this._logger.Log);
-            erz.eCreate += new WorkerLogHandler(this._logger.Log);
-            erz.Start();
+            foreach (Thread e in this._erzeugerThread)
+                e.Start();
+
+            Thread.Sleep(1000);
+
+            foreach (Thread v in this._verbraucherThread)
+                v.Start();
         }
 
-        protected void Push(object o)
+        protected void Push(LagerObject o)
         {
             this._storage.Push(o);
         }
 
-        protected object Pop()
+        protected LagerObject Pop()
         {
             return this._storage.Pop();
         }

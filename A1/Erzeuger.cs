@@ -13,10 +13,7 @@ namespace A1
         internal event WorkerLogHandler eSleep;
 
         protected dPush _push;
-        protected int _speed = 5;
-        protected bool _active = true;
-
-        protected int _counter = 0;
+        protected int _speed = 2;
 
         public Erzeuger(string name, dPush push)
         {
@@ -24,7 +21,7 @@ namespace A1
             this._push = push;
         }
 
-        public void Start()
+        public void Run()
         {
             this.OnStart("Starting...");
             this._active = true;
@@ -32,8 +29,10 @@ namespace A1
             {
                 for (int i = 0; i < this._speed; i++)
                 {
-                    this._push(new object());
-                    this.OnCreate("Created new object (" + ++this._counter + ")");
+                    LagerObject obj = new LagerObject();
+                    this._push(obj);
+
+                    this.OnCreate("Created new object (" + obj.Id + ")");
                 }
 
                 this.OnSleep("Sleeping for 1000 milliseconds");
@@ -54,7 +53,7 @@ namespace A1
             args.Message = message;
             return args;
         }
-
+        
         private void OnCreate(string message)
         {
             if (eCreate != null)
