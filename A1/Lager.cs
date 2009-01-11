@@ -12,6 +12,7 @@ namespace A1
     {
         protected Stack<LagerObject> _storage;
         protected int _capacity;
+        protected double _storagePercentage = 0.0;
 
         protected Erzeuger[] _erzeuger;
         protected Verbraucher[] _verbraucher;
@@ -72,23 +73,73 @@ namespace A1
 
         public void Run()
         {
+            this.startErzeuger();
+        }
+
+        protected void startErzeuger()
+        {
             foreach (Thread e in this._erzeugerThread)
                 e.Start();
+        }
 
-            Thread.Sleep(1000);
+        protected void stopErzeuger()
+        {
+            foreach (Thread e in this._erzeugerThread)
+                e.Abort();
+        }
 
+        protected void startVerbraucher()
+        {
             foreach (Thread v in this._verbraucherThread)
                 v.Start();
+        }
+
+        protected void stopVerbraucher()
+        {
+            foreach (Thread v in this._verbraucherThread)
+                v.Abort();
+        }
+
+        protected void calcStoragePercentage()
+        {
+            this._storagePercentage = ((double) this._storage.Count) / ((double) this._capacity);
         }
 
         protected void Push(LagerObject o)
         {
             this._storage.Push(o);
+
+            this.calcStoragePercentage();
+            if (this._storagePercentage > 0.9)
+            {
+                this.startVerbraucher();
+            }
+            if (this._storagePercentage >= 1)
+            {
+                this.stopErzeuger();
+            }
         }
 
         protected LagerObject Pop()
         {
-            return this._storage.Pop();
+            bool pop = true;
+
+            this.calcStoragePercentage();
+            if (this._storagePercentage < 0.1)
+            {
+                pop = false;
+                this.startErzeuger();
+            }
+            else if (this._storagePercentage == 0)
+            {
+                pop = false;
+                this.stopVerbraucher();
+            }
+
+            if(pop)
+                return this._storage.Pop();
+
+            return null;
         }
 
     }
